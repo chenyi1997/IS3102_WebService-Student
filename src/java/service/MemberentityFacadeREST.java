@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -111,6 +112,40 @@ public class MemberentityFacadeREST extends AbstractFacade<Memberentity> {
             return Response.status(Response.Status.UNAUTHORIZED).build();
         }
     }
+    
+@GET
+@Path("getMemberByEmail")
+@Produces("application/json")
+    public Response getMemberByEmail(@QueryParam ("email")String email) throws SQLException{
+	try{
+		Connection conn =DriverManager.getConnection( "jdbc:mysql://localhost:3306/islandfurniture-it07?user=root&password=12345");
+		String stmt = "Select * from memberentity where email=?";	
+		PreparedStatement ps = conn.prepareStatement(stmt);
+		ps.setString(1,email);
+                ResultSet rs = ps.executeQuery();
+ 		
+		if(rs.next()){
+			Memberentity memberentity= new Memberentity(rs.getLong("id"));
+                        memberentity.setEmail(rs.getString("email"));
+                        memberentity.setName(rs.getString("name"));
+                        memberentity.setPhone(rs.getString("phone"));
+                        memberentity.setAddress(rs.getString("address"));
+                        memberentity.setAge(rs.getInt("age"));
+                        memberentity.setIncome(rs.getInt("income"));
+                        conn.close();
+                        return Response.status(200).entity(memberentity).build();
+		}  
+                else {
+                    System.out.println(
+                            "Login credentials provided were incorrect, password wrong.");
+                    return Response.status(Response.Status.UNAUTHORIZED).build();
+                }
+	} catch (Exception ex) {
+            ex.printStackTrace();
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+    }
+
 
     public String generatePasswordSalt() {
         byte[] salt = new byte[16];
