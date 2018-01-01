@@ -1,5 +1,7 @@
 package service;
 
+import Entity.Countryentity;
+import static Entity.ItemCountryentity_.countryId;
 import Entity.Itementity;
 import Entity.Lineitementity;
 import Entity.Member;
@@ -103,7 +105,7 @@ public class MemberentityFacadeREST extends AbstractFacade<Memberentity> {
             String passwordHash = generatePasswordHash(passwordSalt, password);
             if (passwordHash.equals(rs.getString("PASSWORDHASH"))) {
                 return Response.ok(email, MediaType.APPLICATION_JSON).build();
-            } else {
+            } else {    
                 System.out.println("Login credentials provided were incorrect, password wrong.");
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
@@ -116,24 +118,29 @@ public class MemberentityFacadeREST extends AbstractFacade<Memberentity> {
 @GET
 @Path("getMemberByEmail")
 @Produces("application/json")
-    public Response getMemberByEmail(@QueryParam ("email")String email) throws SQLException{
+    public Response getMemberByEmail(@QueryParam("email") String email) throws SQLException{
 	try{
-		Connection conn =DriverManager.getConnection( "jdbc:mysql://localhost:3306/islandfurniture-it07?user=root&password=12345");
+		Connection conn =DriverManager.getConnection("jdbc:mysql://localhost:3306/islandfurniture-it07?user=root&password=12345");
 		String stmt = "Select * from memberentity where email=?";	
 		PreparedStatement ps = conn.prepareStatement(stmt);
 		ps.setString(1,email);
+                
                 ResultSet rs = ps.executeQuery();
  		
 		if(rs.next()){
-			Memberentity memberentity= new Memberentity(rs.getLong("id"));
-                        memberentity.setEmail(rs.getString("email"));
-                        memberentity.setName(rs.getString("name"));
-                        memberentity.setPhone(rs.getString("phone"));
-                        memberentity.setAddress(rs.getString("address"));
-                        memberentity.setAge(rs.getInt("age"));
-                        memberentity.setIncome(rs.getInt("income"));
+			Member member= new Member();
+                        member.setId(rs.getLong("id"));
+                        member.setEmail(rs.getString("email"));
+                        member.setName(rs.getString("name"));
+                        member.setPhone(rs.getString("phone"));
+                        member.setCity(rs.getString("city"));
+                        member.setAddress(rs.getString("address"));
+                        member.setSecurityQuestion(rs.getInt("securityQuestion"));
+                        member.setSecurityAnswer(rs.getString("securityAnswer"));              
+                        member.setAge(rs.getInt("age"));
+                        member.setIncome(rs.getInt("income"));
                         conn.close();
-                        return Response.status(200).entity(memberentity).build();
+                        return Response.status(200).entity(member).build();
 		}  
                 else {
                     System.out.println(
@@ -143,6 +150,83 @@ public class MemberentityFacadeREST extends AbstractFacade<Memberentity> {
 	} catch (Exception ex) {
             ex.printStackTrace();
             return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+    }
+    
+    @GET
+    @Path("updateMemberByEmail")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateMemberByEmail(@QueryParam("name") String name, @QueryParam("email") String email,@QueryParam("phone") String phone,@QueryParam("city") String city, @QueryParam("address") String address,@QueryParam("securityQuestion") int securityQuestion,@QueryParam("securityAnswer")String securityAnswer,@QueryParam("age")int age, @QueryParam("income")int income, @QueryParam("passwordHash") String password) throws SQLException{
+        try{
+            Connection conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/islandfurniture-it07?user=root&password=12345");
+            //if password is null, string stmt donnid to have update password at all
+            //else string stmt update password
+            
+            //stmt = "UPDATE memberentity SET name = ? , password salt = ?, password hash = ? where email = ?
+            //stmt = "UPDATE memberentity SET name = ? WHERE email = ?" (password is null)
+            
+            
+            String salt = generatePasswordSalt();
+            String hash = generatePasswordHash(salt, password);
+            PreparedStatement ps = null;
+            
+            //dont update password
+            if (password == null || password.equals("")) {
+                
+//                String stmt = "UPDATE Memberentity SET NAME=?,PHONE=?,ADDRESS=?,SECURITYQUESTION=?,SECURITYANSWER=?,AGE=?,INCOME=?,PASSWORDHASH=?"
+//                        + "WHERE EMAIL=?";
+                String stmt = "UPDATE memberentity SET name = ? , phone = ? , city = ? , address = ? ,securityQuestion = ?, securityAnswer = ? , age = ? , income = ? WHERE EMAIL = ?";
+                
+                ps = conn.prepareStatement(stmt);
+                ps.setString(1, name);
+                ps.setString(2, phone);
+                ps.setString(3, city);
+                ps.setString(4, address);
+                ps.setInt(5,securityQuestion);
+                ps.setString(6,securityAnswer);
+                ps.setInt(7, age);
+                ps.setInt(8,income);
+                ps.setString(9, email);
+ 
+              //  ps.setString(11, salt);
+//                ps.setString(1, member.getName());
+//                ps.setString(2, member.getEmail());
+//                ps.setString(1, member.getName());
+//                ps.setString(2, member.getPhone());
+//                ps.setString(3, member.getAddress());
+//                ps.setInt(4, member.getSecurityQuestion());
+//                ps.setString(5, member.getSecurityAnswer());
+//                ps.setInt(6, member.getAge());
+//                ps.setInt(7, member.getIncome());
+//                ps.setString(8, passwordHash);
+//                ps.setString(9, member.getEmail());
+
+            } 
+            //update password
+            else {
+                String stmt = "UPDATE Memberentity SET NAME=?,PHONE=?,city = ? ,ADDRESS=?,SECURITYQUESTION=?,SECURITYANSWER=?,AGE=?,INCOME=?,PASSWORDHASH=? ,PASSWORDSALT = ? WHERE EMAIL=?";
+                ps = conn.prepareStatement(stmt);
+                ps.setString(1, name);
+                ps.setString(2, phone);
+                ps.setString(3, city);
+                ps.setString(4, address);
+                ps.setInt(5,securityQuestion);
+                ps.setString(6,securityAnswer);
+                ps.setInt(7, age);
+                ps.setInt(8,income);
+                ps.setString(9, hash);
+                ps.setString(10, salt);
+                ps.setString(11, email);
+            //THE RETURN LINK IS IT 
+                
+            }
+            ps.executeUpdate();
+                conn.close();
+                
+            return Response.status(Response.Status.OK).entity("s").build();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return Response.status(Response.Status.BAD_REQUEST).build();
         }
     }
 
