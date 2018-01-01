@@ -18,10 +18,9 @@ public class Member {
     private Integer age;
     private Integer income;
 
-    public Member(String name, String phone, String address, String securityAnswer, int age, int income) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public Member() {
+        
     }
- 
 
     public Long getId() {
         return id;
