@@ -18,10 +18,6 @@ public class Member {
     private Integer age;
     private Integer income;
 
-    public Member() {
-        
-    }
-
     public Long getId() {
         return id;
     }
