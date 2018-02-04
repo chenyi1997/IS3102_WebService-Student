@@ -5,7 +5,11 @@
  */
 package Entity;
 
+import DatabaseConnection.DBConn;
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.List;
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -129,6 +133,27 @@ public class Lineitementity implements Serializable {
 
     public void setMemberentityList(List<Memberentity> memberentityList) {
         this.memberentityList = memberentityList;
+    }
+    
+    public boolean addToSalesRecord(long salesRecordId){
+        try{
+            Connection conn = DBConn.getConnection();
+            String query = "INSERT INTO salesrecordentity_lineitementity"
+                         + "(SalesRecordEntity_ID,itemsPurchased_ID)"
+                         + "VALUES "
+                         + "(?,?)";
+            PreparedStatement ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1,salesRecordId);
+            ps.setLong(2,this.id);
+            ps.executeQuery();
+            
+            ps.close();
+            return true;
+            
+        }catch(Exception ex){
+            System.out.println(ex.toString());
+            return false;
+        }
     }
 
 }
