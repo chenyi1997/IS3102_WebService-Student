@@ -82,6 +82,7 @@ public class ItementityFacadeREST extends AbstractFacade<Itementity> {
         return itemList;
     }
 
+    
     @GET
     @Path("itemname")
     @Produces({"application/json"})
@@ -96,7 +97,7 @@ public class ItementityFacadeREST extends AbstractFacade<Itementity> {
             return "";
         }
     }
-
+     
     //Retrieve an item based on SKU
     //this function is not used
     @GET
