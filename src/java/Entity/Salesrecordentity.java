@@ -163,12 +163,12 @@ public class Salesrecordentity {
         String stmt ="INSERT INTO salesrecordentity (AMOUNTDUE,AMOUNTPAID,AMOUNTPAIDUSINGPOINTS,CREATEDDATE,CURRENCY,LOYALTYPOINTSDEDUCTED,POSNAME,RECEIPTNO,SERVEDBYSTAFF,MEMBER_ID,STORE_ID)" +
         "VALUES(?,?,0,?,'SGD',0,'Counter 1',?,'Cashier 1',?,?)";
         ps = conn.prepareStatement(stmt,Statement.RETURN_GENERATED_KEYS);
-        ps.setDouble(1, this.amountdue);                        //amountdue
-        ps.setDouble(2, this.amountpaid);                       //amountpaid
-        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()));//CREATEDATE 
+        ps.setDouble(1, this.amountdue);                                        //amountdue
+        ps.setDouble(2, this.amountpaid);                                       //amountpaid
+        ps.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis())); //CREATEDATE 
         ps.setString(4, receiptno);
         ps.setLong(5, Long.parseLong(memberId));                                //memberId
-        ps.setInt(6, 59);                                       //STORE_ID
+        ps.setInt(6, 59);                                                       //STORE_ID
  
         ps.executeUpdate();
         rs = ps.getGeneratedKeys();
