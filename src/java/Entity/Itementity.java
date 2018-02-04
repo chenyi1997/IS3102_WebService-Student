@@ -5,7 +5,13 @@
  */
 package Entity;
 
+import DatabaseConnection.DBConn;
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -276,4 +282,59 @@ public class Itementity implements Serializable {
         return "Entity.Itementity[ id=" + id + " ]";
     }
     
+    public long addToDatabase(int quantity) throws ClassNotFoundException, SQLException{
+        Connection conn = DBConn.getConnection();
+        String stmt = "INSERT INTO lineitementity (QUANTITY,ITEM_ID)"
+                    + "VALUES(?,?)";
+        long lineItemEntityID;
+        try{
+            //RETURN_GENERATED_KEYS -> auto incremental primary key retrieval
+            //http://stackoverflow.com/questions/7162989/sqlexception-generated-keys-not-requested-mysql
+           PreparedStatement ps = conn.prepareStatement(stmt,Statement.RETURN_GENERATED_KEYS);
+           ps.setInt(1, quantity);
+           ps.setLong(2,this.id);
+           
+           ps.executeUpdate();
+           ResultSet rs = ps.getGeneratedKeys();
+           rs.next();
+           lineItemEntityID = rs.getLong(1);
+           
+           ps.close();
+           rs.close();
+           
+           return lineItemEntityID;
+        }catch(SQLException ex){
+            System.out.println(ex.toString());
+            return -1; //for debugging purpose
+        }    
+    }
+    
+    public boolean reduceFromDatabase(int quantity) throws ClassNotFoundException, SQLException{
+        Connection conn = DBConn.getConnection();
+        //given 
+        String stmt = "UPDATE country_ecommerce c, warehouseentity w, "
+                + "storagebinentity sb, storagebinentity_lineitementity sbli, "
+                + "lineitementity li, itementity i "
+                + "SET li.QUANTITY = li.QUANTITY - ? "
+                + "WHERE li.ITEM_ID=i.ID and sbli.lineItems_ID=li.ID and "
+                + "sb.ID=sbli.StorageBinEntity_ID and w.id=sb.WAREHOUSE_ID and "
+                + "c.warehouseentity_id=w.id and sb.type<>'Outbound' AND "
+                + "ITEM_ID=?";
+        try{
+            //to retrieve auto incremental primary key 
+            PreparedStatement ps = conn.prepareStatement(stmt,Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1,quantity);
+            ps.setLong(2,this.id);
+            
+            ps.executeUpdate();
+            ps.close();
+            return true;
+        }catch(SQLException ex){
+            System.out.println(ex.toString());
+            return false;
+        }
+    }
 }
+    
+    
+
