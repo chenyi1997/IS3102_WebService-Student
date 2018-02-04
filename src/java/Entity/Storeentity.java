@@ -5,7 +5,11 @@
  */
 package Entity;
 
+import DatabaseConnection.DBConn;
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -22,7 +26,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  *
- * @author Jason
+ * @author Chen Yi
  */
 @Entity
 @Table(name = "storeentity")
@@ -181,6 +185,31 @@ public class Storeentity implements Serializable {
     @Override
     public String toString() {
         return "Entity.Storeentity[ id=" + id + " ]";
+    }
+    
+    public void retrieveStore(){
+        try{
+            Connection conn = DBConn.getConnection();
+            String stmt = "Select * from Storeentity where isdeleted=FALSE AND ID=?";
+            
+            PreparedStatement ps = conn.prepareStatement(stmt);
+            ResultSet rs = ps.executeQuery();
+            
+            if(rs.next()){
+                this.setAddress("address");
+                this.setEmail(rs.getString("email"));
+                this.setName(rs.getString("name"));
+                this.setPostalcode("postalcode");
+                this.setTelephone(rs.getString("telephone"));
+            }
+            
+            rs.close();
+            ps.close();
+            
+        }catch(Exception ex){
+            System.out.println(ex.toString());
+        }
+        
     }
     
 }
