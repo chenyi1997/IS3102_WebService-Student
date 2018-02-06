@@ -3,6 +3,7 @@ package service;
 import Entity.Itementity;
 import Entity.Lineitementity;
 import Entity.Salesrecordentity;
+import static java.lang.System.out;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Date;
+import java.util.List;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.Produces;
@@ -48,50 +50,35 @@ public class ECommerceFacadeREST {
     @Path("updateQuantityItemRecord")
     @Produces("application/json")
     public Response updateQuantityFromItemRecord(
-            @QueryParam("salesRecordID")long salesRecordId,
-            @QueryParam("itemEntityID") long itemEntityId,
+            @QueryParam("storeID")int StoreId,
+            @QueryParam("SKU") String SKU,
             @QueryParam("quantity")     int quantity,
-            @QueryParam("countryID")    long countryId){
-        
+            @QueryParam("countryID")    int countryId){
+        String message = "";
         try{
             //initialize LineItemEntity object first
-            Itementity item = new Itementity(itemEntityId);
+            Itementity item = new Itementity();
+            
+            item.setSku(SKU);
             Lineitementity  lineitem = new Lineitementity();
             
-            if(item.reduceFromDatabase(quantity)){
-            
-            }else{
-                return Response.status(Response.Status.BAD_REQUEST)
-                     .entity("Unable to deduct from database").build();
-            }
-           
-                //retrieve the PK from the database after adding it 
-                lineitem.setId(item.addToDatabase(quantity));
-                
-                //Bind it with the salesrecordentity
-                lineitem.addToSalesRecord(salesRecordId);
-                
-                //if got id 
-                if(lineitem.getId()>0){
-                    return Response.status(Response.Status.OK)
-                            .entity("Success! ").build();
-                }else{
-                    return Response.status(Response.Status.CONFLICT)
-                            .entity(String.valueOf(lineitem.getId())).build();
-                }
-        }catch(ClassNotFoundException | SQLException ex){
-                return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(ex.toString()).build(); 
+            item.reduceFromDatabase(quantity, SKU, StoreId);
+            message = Integer.toString(item.getidfromsku(SKU));
+
+//                
+        }catch(Exception ex){
+                return Response.status(Response.Status.OK)
+                    .entity(message + "came here" + ex).build(); 
         }
+          return Response.status(Response.Status.OK)
+                    .entity(message).build(); 
     }
-    
+     
        
     /*
     * after submit payment details, create a transaction record
     * update the salesrecordentity in DB
-    */
-    
-    
+    */   
     @PUT
     @Path("createECommerceTransactionRecord")
     @Produces("application/json")
@@ -116,6 +103,23 @@ public class ECommerceFacadeREST {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(ex.getMessage().toString()).build();
         }
+    }
+    
+    @PUT
+    @Path("createECommerceLineItemRecord")
+    @Produces(MediaType.APPLICATION_JSON) 
+    public Response createECommerceLineItemRecord(@QueryParam("ItemIDs") int Id, @QueryParam("Quantity") int Quantity, @QueryParam("salesRecordID") int id) throws ClassNotFoundException, SQLException{ 
+        //String success = ck.createECommerceLineItemRecord(ids, Quantity, id);
+        try {
+        Itementity item = new Itementity();
+        String success =item.addToDatabase(Id, Quantity, id);
+        
+        return Response.status(Response.Status.OK).entity("" + success).build();
+        }
+        catch (Exception e) {
+            return Response.status(Response.Status.OK).entity("" + e.getMessage()).build();
+        }
+        
     }
     
 }
