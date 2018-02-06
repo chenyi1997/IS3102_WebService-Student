@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -282,58 +283,79 @@ public class Itementity implements Serializable {
         return "Entity.Itementity[ id=" + id + " ]";
     }
     
-    public long addToDatabase(int quantity) throws ClassNotFoundException, SQLException{
+    public String addToDatabase(int itemid, int quantity, int salesrecordid) throws ClassNotFoundException, SQLException{
         Connection conn = DBConn.getConnection();
         String stmt = "INSERT INTO lineitementity (QUANTITY,ITEM_ID)"
                     + "VALUES(?,?)";
-        long lineItemEntityID;
+        int lineItemEntityId = 0;
         try{
             //RETURN_GENERATED_KEYS -> auto incremental primary key retrieval
             //http://stackoverflow.com/questions/7162989/sqlexception-generated-keys-not-requested-mysql
            PreparedStatement ps = conn.prepareStatement(stmt,Statement.RETURN_GENERATED_KEYS);
            ps.setInt(1, quantity);
-           ps.setLong(2,this.id);
+           ps.setInt(2,itemid);
            
            ps.executeUpdate();
            ResultSet rs = ps.getGeneratedKeys();
            rs.next();
-           lineItemEntityID = rs.getLong(1);
+           lineItemEntityId = rs.getInt(1);
+           
+           
+           ps = conn.prepareStatement("insert into salesrecordentity_lineitementity VALUES (?,?)");
+           ps.setInt(1, salesrecordid);
+           ps.setInt(2, lineItemEntityId);      
+           ps.executeUpdate();
            
            ps.close();
            rs.close();
            
-           return lineItemEntityID;
+           return "test" + itemid + "," +quantity + "," + salesrecordid + "," + lineItemEntityId;
         }catch(SQLException ex){
             System.out.println(ex.toString());
-            return -1; //for debugging purpose
+            return "came " + ex.getMessage() + "\n" + itemid + "," +quantity + "," + salesrecordid + "," + lineItemEntityId; //for debugging purpose nened to submit okkok wait give me 1min
         }    
     }
-    
-    public boolean reduceFromDatabase(int quantity) throws ClassNotFoundException, SQLException{
+   
+    public void reduceFromDatabase(int quantity, String sku, int storeID) throws ClassNotFoundException, SQLException{
         Connection conn = DBConn.getConnection();
-        //given 
-        String stmt = "UPDATE country_ecommerce c, warehouseentity w, "
-                + "storagebinentity sb, storagebinentity_lineitementity sbli, "
-                + "lineitementity li, itementity i "
-                + "SET li.QUANTITY = li.QUANTITY - ? "
-                + "WHERE li.ITEM_ID=i.ID and sbli.lineItems_ID=li.ID and "
-                + "sb.ID=sbli.StorageBinEntity_ID and w.id=sb.WAREHOUSE_ID and "
-                + "c.warehouseentity_id=w.id and sb.type<>'Outbound' AND "
-                + "ITEM_ID=?";
+       
+        String stmt = "update storeentity s, warehouseentity w, storagebinentity sb, storagebinentity_lineitementity sbli, lineitementity l,"
+                     +"itementity i set l.quantity = l.quantity - ? where s.WAREHOUSE_ID=w.ID and w.ID=sb.WAREHOUSE_ID and sb.ID=sbli.StorageBinEntity_ID and"
+                     +" sbli.lineItems_ID=l.ID and l.ITEM_ID=i.ID and s.ID=? and i.SKU=?";
         try{
             //to retrieve auto incremental primary key 
             PreparedStatement ps = conn.prepareStatement(stmt,Statement.RETURN_GENERATED_KEYS);
-            ps.setInt(1,quantity);
-            ps.setLong(2,this.id);
-            
-            ps.executeUpdate();
-            ps.close();
-            return true;
-        }catch(SQLException ex){
-            System.out.println(ex.toString());
-            return false;
+            ps.setInt(1, quantity);
+            ps.setLong(2,storeID);
+            ps.setString(3,sku);       
+            ps.executeUpdate();  
+            ps.close();          
+        }catch(Exception ex){
+            System.out.println(ex.toString());     
         }
     }
+    
+    
+    public int getidfromsku(String SKU) throws SQLException, ClassNotFoundException {
+        Connection conn = DBConn.getConnection();
+        int Id =0;
+        try {
+                PreparedStatement pst = conn.prepareStatement("select ID from itementity where SKU = ?");
+                pst.setString(1, SKU);
+                 ResultSet rs = pst.executeQuery();
+                 while (rs.next()) {
+                     Id = rs.getInt(1);
+                 }
+            }
+        
+        catch (Exception e) {
+        }
+        finally {
+            return Id;
+        }
+    }
+    
+   
 }
     
     
